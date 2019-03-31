@@ -30,6 +30,26 @@ $ mkcert -cert-file cert.pem -key-file key.pem localhost 127.0.0.1 more.hostname
 
 ## Usage
 
+``` 
+$ dirhttps -h 
+Serving contents of current directory by HTTPS.
+
+Usage:
+  dirhttps [flags]
+
+Flags:
+      --cache           Enable client side caching
+  -h, --help            help for dirhttps
+  -l, --listen string   Listen address (default ":8443")
+      --no-cors         Disable CORS handling
+      --version         version for dirhttps
+```
+
+
+### Examples
+
+* Basic usage
+
 ```
 $ cd /tmp
 $ dirhttps  
@@ -37,7 +57,7 @@ $ dirhttps
 2019/03/31 13:40:26 Serving from directory /tmp
 ```
 
-### Different listening address/port
+* Different listening address/port
 
 ```
 $ dirhttps -l :1234
