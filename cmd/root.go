@@ -67,13 +67,21 @@ var rootCmd = &cobra.Command{
 		log.Printf("Listening for HTTPS connections on %s", addr)
 		log.Printf("Serving from directory %s", dir)
 
-		// permit some CORS stuff
-		corsHandler := cors.New(cors.Options{
-			AllowCredentials: true,
-			AllowOriginFunc: func(origin string) bool {return true},
-		})
+		handler := logger(http.FileServer(http.Dir(dir)))
 
-		handler := corsHandler.Handler(logger(http.FileServer(http.Dir(dir))))
+		// permit some CORS stuff
+		if disableCORS, _ := cmd.Flags().GetBool("no-cors"); !disableCORS {
+			handler = cors.New(cors.Options{
+				AllowCredentials: true,
+				AllowOriginFunc: func(origin string) bool {return true},
+			}).Handler(handler)
+		}
+
+		// Disable browser cache?
+		if cache, _ := cmd.Flags().GetBool("cache"); !cache {
+			handler = nocache(handler)
+		}
+
 		log.Fatal(http.ListenAndServeTLS(addr, certFile, keyFile, handler))
 	},
 }
@@ -87,7 +95,8 @@ func Execute() {
 
 func init(){
 	rootCmd.Flags().StringP("listen", "l", ":8443", "Listen address")
-	//rootCmd.Flags().Bool("version", false, "Print version and exit")
+	rootCmd.Flags().Bool("no-cors", false, "Disable CORS handling")
+	rootCmd.Flags().Bool("cache", false, "Enable client side caching")
 }
 
 func logger(handler http.Handler) http.Handler {
@@ -96,3 +105,11 @@ func logger(handler http.Handler) http.Handler {
 		handler.ServeHTTP(w, r)
 	})
 }
+
+func nocache(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Cache-Control", "no-store")
+		handler.ServeHTTP(w, r)
+	})
+}
+
