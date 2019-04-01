@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/maetthu/dirhttps/internal/lib/version"
+	"github.com/mitchellh/go-homedir"
 	"github.com/rs/cors"
 	"github.com/spf13/cobra"
 	"log"
@@ -22,13 +23,13 @@ var rootCmd = &cobra.Command{
 	Args: cobra.NoArgs,
 	Version: fmt.Sprintf("%s -- %s", version.Version, version.Commit),
 	Run: func(cmd *cobra.Command, args []string) {
-		homeDir, err := os.UserHomeDir()
+		home, err := homedir.Dir()
 
 		if err != nil {
 			log.Fatalf("Error determining home directory: %s", err)
 		}
 
-		configDir := fmt.Sprintf("%s/.config/dirhttps", homeDir)
+		configDir := fmt.Sprintf("%s/.config/dirhttps", home)
 
 		certFile := filepath.Join(configDir, CertFilename)
 		keyFile := filepath.Join(configDir, KeyFilename)
