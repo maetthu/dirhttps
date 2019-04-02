@@ -13,9 +13,11 @@ import (
 )
 
 const (
-	CertFilename = "cert.pem"
-	KeyFilename = "key.pem"
+	certFilename = "cert.pem"
+	keyFilename  = "key.pem"
 )
+
+var configDir string
 
 var rootCmd = &cobra.Command{
 	Use:   "dirhttps",
@@ -23,16 +25,19 @@ var rootCmd = &cobra.Command{
 	Args: cobra.NoArgs,
 	Version: fmt.Sprintf("%s -- %s", version.Version, version.Commit),
 	Run: func(cmd *cobra.Command, args []string) {
-		home, err := homedir.Dir()
+
+		certFile, err := cmd.Flags().GetString("cert")
 
 		if err != nil {
-			log.Fatalf("Error determining home directory: %s", err)
+			log.Fatalf("Error parsing cert flag: %s", err)
 		}
 
-		configDir := fmt.Sprintf("%s/.config/dirhttps", home)
+		keyFile, err := cmd.Flags().GetString("key")
 
-		certFile := filepath.Join(configDir, CertFilename)
-		keyFile := filepath.Join(configDir, KeyFilename)
+		if err != nil {
+			log.Fatalf("Error parsing key flag: %s", err)
+		}
+
 		certAvailable := true
 
 		if _, err := os.Stat(certFile); err != nil  {
@@ -46,10 +51,9 @@ var rootCmd = &cobra.Command{
 		if !certAvailable {
 			log.Printf("Necessary certificate and/or key file not found.")
 			log.Fatalf(
-				"Place a certificate \"%s\" and a key file \"%s\" to %s",
-				CertFilename,
-				KeyFilename,
-				configDir,
+				"Store a certificate to \"%s\" and a key file to \"%s\" or provide the --cert and --key flags",
+				certFilename,
+				keyFilename,
 				)
 		}
 
@@ -62,7 +66,7 @@ var rootCmd = &cobra.Command{
 		addr, err := cmd.Flags().GetString("listen")
 
 		if err != nil {
-			log.Fatalf("Error parsing listen flage: %s", err)
+			log.Fatalf("Error parsing listen flag: %s", err)
 		}
 
 		log.Printf("Listening for HTTPS connections on %s", addr)
@@ -87,6 +91,7 @@ var rootCmd = &cobra.Command{
 	},
 }
 
+// Execute runs root command
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
@@ -95,7 +100,20 @@ func Execute() {
 }
 
 func init(){
+	home, err := homedir.Dir()
+
+	if err != nil {
+		log.Fatalf("Error determining home directory: %s", err)
+	}
+
+	configDir := fmt.Sprintf("%s/.config/dirhttps", home)
+
+	certFile := filepath.Join(configDir, certFilename)
+	keyFile := filepath.Join(configDir, keyFilename)
+
 	rootCmd.Flags().StringP("listen", "l", ":8443", "Listen address")
+	rootCmd.Flags().StringP("cert", "c", certFile, "Certificate file")
+	rootCmd.Flags().StringP("key", "k", keyFile, "Key file")
 	rootCmd.Flags().Bool("no-cors", false, "Disable CORS handling")
 	rootCmd.Flags().Bool("cache", false, "Enable client side caching")
 }

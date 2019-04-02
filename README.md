@@ -31,7 +31,6 @@ $ mkcert -cert-file cert.pem -key-file key.pem localhost 127.0.0.1 more.hostname
 ## Usage
 
 ``` 
-$ dirhttps -h 
 Serving contents of current directory by HTTPS.
 
 Usage:
@@ -39,12 +38,13 @@ Usage:
 
 Flags:
       --cache           Enable client side caching
+  -c, --cert string     Certificate file (default "/home/maetthu/.config/dirhttps/cert.pem")
   -h, --help            help for dirhttps
+  -k, --key string      Key file (default "/home/maetthu/.config/dirhttps/key.pem")
   -l, --listen string   Listen address (default ":8443")
       --no-cors         Disable CORS handling
       --version         version for dirhttps
 ```
-
 
 ### Examples
 
