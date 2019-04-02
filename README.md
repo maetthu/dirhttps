@@ -15,7 +15,7 @@ $(go env GOPATH)/bin/dirhttps
 
 ## Setup
 
-_dirhttps_ needs a certificate and corresponding key to operate. Easiest option is to use the excellent [mkcert](https://github.com/FiloSottile/mkcert) tool which creates locally trusted, self-signed development certificates.
+_dirhttps_ needs a certificate and corresponding key to operate. Easiest option is to use the excellent [mkcert](https://github.com/FiloSottile/mkcert) tool which creates locally trusted, self-signed development certificates. 
 
 * Install and setup mkcert CA
 * Create dirhttps certificate
@@ -39,6 +39,7 @@ Usage:
 Flags:
       --cache           Enable client side caching
   -c, --cert string     Certificate file (default "/home/maetthu/.config/dirhttps/cert.pem")
+  -d, --dump            Dump client request headers to STDOUT
   -h, --help            help for dirhttps
   -k, --key string      Key file (default "/home/maetthu/.config/dirhttps/key.pem")
   -l, --listen string   Listen address (default ":8443")
@@ -63,4 +64,3 @@ $ dirhttps
 $ dirhttps -l :1234
 $ dirhttps -l 127.0.0.2:8443
 ```
-

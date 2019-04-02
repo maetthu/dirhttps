@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	"log"
 	"net/http"
+	"net/http/httputil"
 	"os"
 	"path/filepath"
 )
@@ -85,6 +86,11 @@ var rootCmd = &cobra.Command{
 			handler = nocache(handler)
 		}
 
+		// Dump request headers?
+		if d, _ := cmd.Flags().GetBool("dump"); d {
+			handler = dump(handler)
+		}
+
 		log.Fatal(http.ListenAndServeTLS(addr, certFile, keyFile, handler))
 	},
 }
@@ -109,11 +115,13 @@ func init(){
 	certFile := filepath.Join(configDir, certFilename)
 	keyFile := filepath.Join(configDir, keyFilename)
 
-	rootCmd.Flags().StringP("listen", "l", ":8443", "Listen address")
 	rootCmd.Flags().StringP("cert", "c", certFile, "Certificate file")
 	rootCmd.Flags().StringP("key", "k", keyFile, "Key file")
-	rootCmd.Flags().Bool("no-cors", false, "Disable CORS handling")
+	rootCmd.Flags().StringP("listen", "l", ":8443", "Listen address")
+
 	rootCmd.Flags().Bool("cache", false, "Enable client side caching")
+	rootCmd.Flags().BoolP("dump", "d",false, "Dump client request headers to STDOUT")
+	rootCmd.Flags().Bool("no-cors", false, "Disable CORS handling")
 }
 
 func logger(handler http.Handler) http.Handler {
@@ -130,3 +138,12 @@ func nocache(handler http.Handler) http.Handler {
 	})
 }
 
+func dump(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if dump, err := httputil.DumpRequest(r, true); err == nil {
+			fmt.Printf("---\n%s---\n", dump)
+		}
+
+		handler.ServeHTTP(w, r)
+	})
+}
