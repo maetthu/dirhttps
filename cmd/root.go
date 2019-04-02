@@ -52,8 +52,8 @@ var rootCmd = &cobra.Command{
 			log.Printf("Necessary certificate and/or key file not found.")
 			log.Fatalf(
 				"Store a certificate to \"%s\" and a key file to \"%s\" or provide the --cert and --key flags",
-				certFilename,
-				keyFilename,
+				certFile,
+				keyFile,
 				)
 		}
 
