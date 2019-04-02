@@ -17,8 +17,6 @@ const (
 	keyFilename  = "key.pem"
 )
 
-var configDir string
-
 var rootCmd = &cobra.Command{
 	Use:   "dirhttps",
 	Short: "Serving contents of current directory by HTTPS.",
