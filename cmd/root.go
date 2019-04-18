@@ -2,15 +2,17 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/maetthu/dirhttps/internal/lib/version"
-	"github.com/mitchellh/go-homedir"
-	"github.com/rs/cors"
-	"github.com/spf13/cobra"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"os"
 	"path/filepath"
+
+	"github.com/maetthu/dirhttps/internal/lib/static"
+	"github.com/maetthu/dirhttps/internal/lib/version"
+	"github.com/mitchellh/go-homedir"
+	"github.com/rs/cors"
+	"github.com/spf13/cobra"
 )
 
 const (
@@ -19,9 +21,9 @@ const (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "dirhttps",
-	Short: "Serving contents of current directory by HTTPS.",
-	Args: cobra.NoArgs,
+	Use:     "dirhttps",
+	Short:   "Serving contents of current directory by HTTPS.",
+	Args:    cobra.NoArgs,
 	Version: fmt.Sprintf("%s -- %s", version.Version, version.Commit),
 	Run: func(cmd *cobra.Command, args []string) {
 
@@ -39,11 +41,11 @@ var rootCmd = &cobra.Command{
 
 		certAvailable := true
 
-		if _, err := os.Stat(certFile); err != nil  {
+		if _, err := os.Stat(certFile); err != nil {
 			certAvailable = false
 		}
 
-		if _, err := os.Stat(keyFile); err != nil  {
+		if _, err := os.Stat(keyFile); err != nil {
 			certAvailable = false
 		}
 
@@ -53,7 +55,7 @@ var rootCmd = &cobra.Command{
 				"Store a certificate to \"%s\" and a key file to \"%s\" or provide the --cert and --key flags",
 				certFile,
 				keyFile,
-				)
+			)
 		}
 
 		dir, err := os.Getwd()
@@ -71,13 +73,23 @@ var rootCmd = &cobra.Command{
 		log.Printf("Listening for HTTPS connections on %s", addr)
 		log.Printf("Serving from directory %s", dir)
 
-		handler := logger(http.FileServer(http.Dir(dir)))
+		handler := http.FileServer(http.Dir(dir))
+
+		// favicon
+		if disableFavicon, _ := cmd.Flags().GetBool("no-favicon"); !disableFavicon {
+			handler = favicon(handler)
+		}
+
+		// logger
+		if quiet, _ := cmd.Flags().GetBool("quiet"); !quiet {
+			handler = logger(handler)
+		}
 
 		// permit some CORS stuff
 		if disableCORS, _ := cmd.Flags().GetBool("no-cors"); !disableCORS {
 			handler = cors.New(cors.Options{
 				AllowCredentials: true,
-				AllowOriginFunc: func(origin string) bool {return true},
+				AllowOriginFunc:  func(origin string) bool { return true },
 			}).Handler(handler)
 		}
 
@@ -103,7 +115,7 @@ func Execute() {
 	}
 }
 
-func init(){
+func init() {
 	home, err := homedir.Dir()
 
 	if err != nil {
@@ -120,13 +132,42 @@ func init(){
 	rootCmd.Flags().StringP("listen", "l", ":8443", "Listen address")
 
 	rootCmd.Flags().Bool("cache", false, "Enable client side caching")
-	rootCmd.Flags().BoolP("dump", "d",false, "Dump client request headers to STDOUT")
+	rootCmd.Flags().BoolP("dump", "d", false, "Dump client request headers to STDOUT")
+	rootCmd.Flags().BoolP("quiet", "q", false, "Don't log requests to STDOUT")
 	rootCmd.Flags().Bool("no-cors", false, "Disable CORS handling")
+	rootCmd.Flags().Bool(
+		"no-favicon",
+		false,
+		"Disable default favicon delivered when no favicon.ico is present in current directory",
+	)
+}
+
+func favicon(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.RequestURI != "/favicon.ico" {
+			handler.ServeHTTP(w, r)
+			return
+		}
+
+		i, err := os.Stat("favicon.ico")
+
+		if !os.IsNotExist(err) && !i.IsDir() {
+			handler.ServeHTTP(w, r)
+			return
+		}
+
+		w.Header().Add("Content-Type", "image/vnd.microsoft.icon")
+		_, err = w.Write(static.Favicon)
+
+		if err != nil {
+			log.Print(err)
+		}
+	})
 }
 
 func logger(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf( "%s \"%s %s %s\"\n", r.RemoteAddr, r.Method, r.URL, r.Proto)
+		log.Printf("%s \"%s %s %s\"\n", r.RemoteAddr, r.Method, r.URL, r.Proto)
 		handler.ServeHTTP(w, r)
 	})
 }
