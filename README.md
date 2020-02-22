@@ -1,5 +1,7 @@
 # dirhttps
 
+![build](https://github.com/maetthu/dirhttps/workflows/build/badge.svg)
+
 Spinning up an HTTPS server from current directory - the TLS equivalent of `python -m http.server`.
 
 ## Install
