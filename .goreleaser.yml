@@ -1,16 +1,21 @@
+before:
+  hooks:
+    - go mod tidy
 builds:
-  - binary: dirhttps
+  - env:
+      - CGO_ENABLED=0
+    binary: dirhttps
     ldflags:
       - -s -w -X github.com/maetthu/dirhttps/internal/lib/version.Version={{.Version}} -X github.com/maetthu/dirhttps/internal/lib/version.Commit={{.Commit}} -X github.com/maetthu/dirhttps/internal/lib/version.Date={{.Date}}
-    env:
-      - CGO_ENABLED=0
     goos:
       - linux
       - darwin
     goarch:
       - amd64
-archive:
-  format: tar.gz
-  files:
-    - LICENSE
-    - README.md
+archives:
+  - files:
+      - LICENSE
+      - README.md
+checksum:
+  name_template: 'checksums.txt'
+
