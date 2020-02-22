@@ -1,7 +1,6 @@
-.PHONY: build install snapshot dist test vet lint fmt run clean
-OUT := ngxcpd
+.PHONY: build install snapshot dist test vet lint fmt clean
+OUT := dirhttps
 PKG := github.com/maetthu/dirhttps
-VERSION := $(shell git describe --always --dirty --tags)
 PKG_LIST := $(shell go list ${PKG}/... | grep -v /vendor/)
 GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/)
 
@@ -14,7 +13,7 @@ install:
 	CGO_ENABLED=0 GOOS=linux go install -a -v -o ${OUT} ${PKG}
 
 snapshot:
-	goreleaser --snapshot --rm-dist
+	goreleaser --snapshot --skip-publish --rm-dist
 
 dist:
 	goreleaser --rm-dist
@@ -33,12 +32,5 @@ lint:
 fmt:
 	@gofmt -l -w -s ${GO_FILES}
 
-run: build
-	./${OUT} listen
-
 clean:
 	-@rm ${OUT}
-
-
-
-
